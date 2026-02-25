@@ -1,3 +1,5 @@
+//THIS PROJECT IS TERRIBLE
+
 //***SERVO***//
 #include <Servo.h>
 int flag = 0;
