@@ -1,0 +1,196 @@
+//PHYS 124 PROJECT: AUTOMATIC WAFFLER
+//David (the Goat) Culver, Johnny Lemus
+/*--------------------------------------------------------------------------*/
+//Libraries and StateMachine Setup w/Initialization
+
+  //Libraries
+  #include <Servo.h>          
+  #include <Stepper.h>        
+  #include <LiquidCrystal.h>  
+  #include "HX711.h"             
+
+  //STATE MACHINE w/ states 
+  #include <FiniteStateMachine.h>    
+    enum SystemState{
+      INIT,             //Initialize all systems
+      IDLE,             //Standby for User Input
+      READY_FOR_BATTER, //Wait for Batter
+      DISPENSE,         //Dispense Batter(after ready)
+      READY_TO_COOK,    //Check if Ready to Cook
+      COOKING,          //Start cooking (timer + temp + etc)
+      COOKED,           //Finish cook
+      COMPELTE,         //Show Waffle is complete (if time allows try to LCD)
+      ERROR             //Error should stop all processes immediately
+    }
+
+  SystemState currentState = INIT; //Start system 
+/*--------------------------------------------------------------------------*/
+//Layout/Controls + Setup
+
+  //PIN LAYOUT
+    //2 Digital Pins (TO BE CHANGED)
+      const int StartButton =2;
+      const int valvePin = 9;
+    //1 Analog Pin(s) (TO BE CHANGED)
+      const int forceSensorPin = A3;
+
+  //Timers for cooking
+    long cookStartTime = 0;
+  //const long MAX_COOK_TIME = (TO BE CHANGED after experiment :) (MAYBE 4 mins?) )
+
+  //Controls
+    int WaffleCount = 0; 
+    int desiredWaffles = 3; //MAYBE WE CAN CHANGE THIS VIA USER INPUT with PUSHBUTTON
+                            // + Display on LCD???
+
+  //Threshold(s)
+    float batterTargetWeight = 500; (NEED TO MEASURE and estimate)
+    float forceTolerance = 500; //(NEEDS TO BE IMPLEMENTED)
+/*--------------------------------------------------------------------------*/
+//Setup
+  void setup(){
+
+    //Begin Serial Monitor
+    Serial.begin(9600);
+
+    pinMode(startButtonPin, INPUT_PULLUP) //START BUTTON
+    /*Note: INPUT_PULLUP treats the pin as input and 
+            also turns on an internal resistor   */
+
+    pinMode(valvePin, OUTPUT)             //Set VALVE PIN
+    digitalWrite(valvePin, LOW);          //VALVE PIN IS CLOSED
+
+    Serial.println("System starting...")
+
+    currentState = INIT; //Set to Initialize system
+
+  }
+/*--------------------------------------------------------------------------*/
+//Main Loop
+void loop() {
+
+  //**Switch statement for executing processes based off system state
+  //*TO BE DONE: 
+    //FIX TIMING WITH DELAYS
+    //IMPLEMENT CALIBRATION and SENSORS CHECK
+    //NEED TO IMPLEMENT ERROR STATE if something goes wrong elsewhere in the entire process
+    //IMPLEMENT METHODS FOR:
+      //openWaffleIron(),closeWaffleIron(),openValve(), readForce()
+
+  switch (currentState) {
+
+    case INIT:
+
+      Serial.println("Initializing.....");
+      //CALIBRATE??? 
+      delay(1000);
+      currentState = IDLE;
+      break;
+
+    case IDLE:
+
+      Serial.println("Idle: Waiting for Start");
+
+      //Open Waffler if button 
+      if(digitaRead(startButtoPin) ==LOW){
+        Serial.println("Button pressed. Opening Waffler...")
+        openWaffleIron();
+        currentState = READY_FOR_BATTER;
+      }
+      delay(500);
+      break;
+    
+    case READY_FOR_BATTER:
+
+      //Check if the Waffler is open, then opens the valve for batter to dispense
+      if(waffleIronIsOpen()){ //returns 0 if closed, 1 if open
+        Serial.println("Waffler Open. Dispensing Batter...")
+        openValve(); //Dispense Batter
+        currentState = DISPENSE_COMPLETE; //Break with no delay to ensure smooth dispense
+        break;
+      }
+
+      delay(500);
+      break;
+
+    case DISPENSE_COMPLETE:
+
+      //Read in force on plate
+      float force = readForce(); //(NEED A METHOD!!!)
+
+      //check if force is less than threshold ()
+      if(abs(force - batterTargetWeight) < forceTolerance){
+
+        //Print out how heavy the waffle is maybe?
+        Serial.println("Waffle is ");
+        Serial.print(force);
+        Serial.print(" grams");
+
+        //Show total force and close valve
+        //Display on LCD?
+        Serial.println("Batter Dispensed!");
+        Serial.println(force);
+        delay(20);
+        Serial.println("Closing Valve...");
+        closeValve();
+
+        //Close Waffler
+        closeWaffleIron();
+        currentState = READY_TO_COOK;
+        delay(100);
+        break;
+      }
+    
+    delay(500);
+    break;
+
+  case READY_TO_COOK:
+    Serial.println("Ready to Cook!");
+
+    //Set timer
+    cookStartTime = millis();
+    currentState = COOKING;
+    delay(20);
+    break;
+  
+  case COOKING:
+    Serial.println("We are cooking your delicious waffle...");
+    delay(20);
+    //Maybe add a fun fact about waffles?
+
+    //Check if waffle has been cooked too long
+    if (millis() - cookStartTime > MAX_COOK_TIME){
+      Serial.println("ERROR: MAX COOKING TIME EXCEEDED");
+      currentState = ERROR_STATE;
+    }
+
+    //Check if Waffle is done cooking
+    //CHECK THESE CONDITIONS manually???
+    if(millis() - cookStartTime > 60000*4){
+      currentState = COOKED;
+      break;
+    }
+
+  delay(500);
+  break;
+  
+
+  case COMPLETE:
+
+      //Show completedness 
+      //Maybe add LCD display showing waffle count, how heavy waffle was etc...
+      Serial.println("All Done");
+      break;
+      return;
+
+    case ERROR_STATE:
+      SystemShutdown();
+      return;
+}
+/*--------------------------------------------------------------------------*/
+//Method Abstractions for the Hardware
+//NEED:
+      //openWaffleIron(),closeWaffleIron(),
+      //openValve(), closeValve() 
+      //readForce()
+      //SystemShutdown();
