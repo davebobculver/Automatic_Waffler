@@ -1,7 +1,7 @@
 //PHYS 124 PROJECT: AUTOMATIC WAFFLER
 //David (the Goat) Culver, Johnny Lemus
 /*--------------------------------------------------------------------------*/
-/*--------------------------------------------------------------------------*/
+
 //Libraries and StateMachine Setup w/Initialization
 
   //Libraries
@@ -20,8 +20,8 @@
     
     enum SystemState{
       INIT,             //Initialize all systems
-      CALIBRATE,
-      SCALE_TEST,
+      CALIBRATE,        //User Calibrates the Scale
+      SCALE_TEST,       //Test if Scale Works
       IDLE,             //Standby for User Input
       READY_FOR_BATTER, //Wait for Batter
       DISPENSE,         //Dispense Batter(after ready)
@@ -36,9 +36,9 @@
 
   //Stepper
   const int stepsPerRevolution = 200; // Number of steps per revolution 
-  Stepper myStepper(stepsPerRevolution, 8,9, 10, 11); // Pins connected to the motor
-  const int updownsteps = 60;
-  bool flag = 0;
+  Stepper myStepper(stepsPerRevolution, MOTORPIN1 , MOTORPIN2, MOTORPIN3, MOTORPIN4); // Pins connected to the motor
+  const int numberofSteps = 1000;
+  bool waffleOpen = 0; 
 /*--------------------------------------------------------------------------*/
 //Layout/Controls + Setup
 
@@ -47,24 +47,41 @@
     //SOLENOID
      const int powerRelayV_CC = 3;
 
-    //MOTORSHIELD
-    //PINS 8-11 via myStepper
-
     //HX711
      const int HX711_dout = 6; //mcu > HX711 dout pin
      const int HX711_sck = 7; //mcu > HX711 sck pin
-     
+     HX711_ADC LoadCell(HX711_dout, HX711_sck); 
+     const int calVal_eepromAdress = 0;
+
+    //MOTOR SHIELD
+    const int MOTORPIN1 = 8;
+    const int MOTORPIN2 = 9;
+    const int MOTORPIN3 = 10;
+    const int MOTORPIN4 = 11;
+
   //Timers for cooking
     long cookStartTime = 0;
 
-  //Controls
-    int WaffleCount = 0; 
-    int desiredWaffles = 3; //MAYBE WE CAN CHANGE THIS VIA USER INPUT with PUSHBUTTON
+  //GLOBAL VARIABLES
+  float currentForce = 0; 
+  float batterTargetWeight = 500;
+  unsigned long cookStartTime;
+
+  //int WaffleCount = 0;
+  //int desiredWaffles = 3; (Maybe add some user interation)
 
   /*--------------------------------------------------------------------------*/
   // Hardware abstraction and calibration function implementations are now
   // located in MyLibrary.cpp with their declarations in MyLibrary.h.
+
+
+void setup(){
+  Serial.begin(54000);
+
+  pinMode(solenoidPin, OUTPUT)
+  closeValve();
     
+}
       if(!started){
         Serial.println("\n=== SCALE CALIBRATION ===");
         Serial.println("Remove all weight from scale.");
@@ -162,7 +179,7 @@
       Serial.println("Idle: Waiting for Start");
 
       //Open Waffler if button 
-      if(digitalRead(startButtonPin) ==LOW){
+      if(digitalRead(startButtonPin) == LOW){
         Serial.println("Button pressed. Opening Waffler...");
         openWaffleIron();
         currentState = READY_FOR_BATTER;
