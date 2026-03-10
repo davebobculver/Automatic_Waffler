@@ -74,72 +74,87 @@
   // Hardware abstraction and calibration function implementations are now
   // located in MyLibrary.cpp with their declarations in MyLibrary.h.
 
+/*--------------------------------------------------------------------------*/
 
-void setup(){
-  Serial.begin(54000);
 
-  pinMode(solenoidPin, OUTPUT)
-  closeValve();
+//Setup
+  void setup(){
     
-}
-      if(!started){
-        Serial.println("\n=== SCALE CALIBRATION ===");
-        Serial.println("Remove all weight from scale.");
-        Serial.println("Press 't' to tare.");
-        started = true;
+  Serial.begin(57600);
+  delay(10);
+  Serial.println("System starting...");
+
+  //CLEAR THE EEPROM Adress once during every setup, then remove after uploading and running once 
+  //EEPROM.put(calVal_eepromAdress, 0.0);
+  
+  //Stepper
+    myStepper.setSpeed(60);
+      pinMode(startButtonPin, INPUT_PULLUP);
+
+  //HX711 Init
+  LoadCell.begin();
+    unsigned long stabilizingtime = 2000;
+    boolean _tare = true;
+  
+    LoadCell.start(stabilizingtime, _tare);
+  
+    if (LoadCell.getTareTimeoutFlag() || LoadCell.getSignalTimeoutFlag()) {
+      Serial.println("HX711 Timeout - Check Wiring");
+      currentState = ERROR;
+    }
+    else {
+      Serial.println("HX711 Startup Complete");
+  }
+
+  // Load saved calibration factor
+    float savedCalFactor;
+    EEPROM.get(calVal_eepromAdress, savedCalFactor);
+    
+    // reject bad values
+    if (isnan(savedCalFactor) || savedCalFactor == 0) {
+    
+      Serial.println("No valid calibration factor found.");
+      Serial.println("Using default calibration.");
+    
+      savedCalFactor = 1.0;
+    }   
+    
+    LoadCell.setCalFactor(savedCalFactor);
+    
+    Serial.print("Calibration Factor: ");
+    Serial.println(savedCalFactor);
+
+    //VALVE
+    pinMode(solenoidPin, OUTPUT);
+    pinMode(solenoidPinPair, OUTPUT);
+    digitalWrite(solenoidPin, LOW);      // ensure solenoid is off
+    digitalWrite(solenoidPinPair, LOW);  // paired input stays LOW
+  }
+/*--------------------------------------------------------------------------*/
+//Main Loop
+void loop() {
+
+  //Update LoadCell then get the force and read it in to global currentForce
+  LoadCell.update(); currentForce = readForce();
+
+  switch (currentState) {
+
+    case INIT: {
+
+      Serial.println("Initializing.....");
+      delay(1000);
+      Serial.println("Entering Calibration Mode...");
+      currentState = CALIBRATE;
+
+    break;
+    }
+
+    
+    case CALIBRATE: {
+      calibrate();
       }
     
-      LoadCell.update();
-    
-      if(Serial.available()){
-        char cmd = Serial.read();
-    
-        if(cmd == 't'){
-          Serial.println("Taring...");
-          LoadCell.tareNoDelay();
-        }
-      }
-    
-      if(LoadCell.getTareStatus()){
-    
-        Serial.println("Tare complete.");
-        Serial.println("Place known mass on scale.");
-        Serial.println("Enter weight in grams:");
-    
-        float knownMass = 0;
-    
-        while(knownMass == 0){
-    
-          LoadCell.update();
-    
-          if(Serial.available()){
-            knownMass = Serial.parseFloat();
-          }
-        }
-    
-        Serial.print("Entered mass: ");
-        Serial.println(knownMass);
-    
-        LoadCell.refreshDataSet();
-    
-        float newCalFactor = LoadCell.getNewCalibration(knownMass);
-    
-        Serial.print("New calibration factor: ");
-        Serial.println(newCalFactor);
-    
-        EEPROM.put(calVal_eepromAdress, newCalFactor);
-        LoadCell.setCalFactor(newCalFactor);
-    
-        Serial.println("Calibration saved.");
-    
-        started = false;
-        currentState = SCALE_TEST;
-      }
-
-  break;
-}
-
-    case SCALE_TEST:
+  case SCALE_TEST:
 
   static unsigned long lastPrint = 0;
 
@@ -285,6 +300,3 @@ void setup(){
       return;
   }
 }
-  /*--------------------------------------------------------------------------*/
-  // Hardware abstraction and calibration function implementations are now
-  // located in MyLibrary.cpp with their declarations in MyLibrary.h.
