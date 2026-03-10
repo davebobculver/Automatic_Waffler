@@ -44,6 +44,9 @@
 
   //PINS
 
+    //PUSHBUTTON:
+      const int startButton = 1;
+    
     //SOLENOID
      const int powerRelayV_CC = 3;
 
@@ -59,16 +62,13 @@
     const int MOTORPIN3 = 10;
     const int MOTORPIN4 = 11;
 
-  //Timers for cooking
-    long cookStartTime = 0;
-
   //GLOBAL VARIABLES
   float currentForce = 0; 
   float batterTargetWeight = 500;
   unsigned long cookStartTime;
 
-  //int WaffleCount = 0;
-  //int desiredWaffles = 3; (Maybe add some user interation)
+  const int calVal_eepromAdress = 0;
+  bool waffleOpen = false;
 
   /*--------------------------------------------------------------------------*/
   // Hardware abstraction and calibration function implementations are now
@@ -83,15 +83,18 @@
   Serial.begin(57600);
   delay(10);
   Serial.println("System starting...");
-
-  //CLEAR THE EEPROM Adress once during every setup, then remove after uploading and running once 
-  //EEPROM.put(calVal_eepromAdress, 0.0);
   
   //Stepper
     myStepper.setSpeed(60);
-      pinMode(startButtonPin, INPUT_PULLUP);
+      
+  //PUSHBUTTON
+  pinMode(startButtonPin, INPUT_PULLUP);
 
-  //HX711 Init
+  // SOLENOID
+    pinMode(solenoidPin, INPUT_PULLUP);
+    digitalWrite(solenoidPin, LOW);
+    
+  //HX711 + LoadCell Initiate
   LoadCell.begin();
     unsigned long stabilizingtime = 2000;
     boolean _tare = true;
@@ -123,19 +126,14 @@
     
     Serial.print("Calibration Factor: ");
     Serial.println(savedCalFactor);
-
-    //VALVE
-    pinMode(solenoidPin, OUTPUT);
-    pinMode(solenoidPinPair, OUTPUT);
-    digitalWrite(solenoidPin, LOW);      // ensure solenoid is off
-    digitalWrite(solenoidPinPair, LOW);  // paired input stays LOW
   }
 /*--------------------------------------------------------------------------*/
 //Main Loop
 void loop() {
 
   //Update LoadCell then get the force and read it in to global currentForce
-  LoadCell.update(); currentForce = readForce();
+  LoadCell.update(); 
+  currentForce = readForce();
 
   switch (currentState) {
 
@@ -143,6 +141,7 @@ void loop() {
 
       Serial.println("Initializing.....");
       delay(1000);
+      
       Serial.println("Entering Calibration Mode...");
       currentState = CALIBRATE;
 
@@ -152,9 +151,10 @@ void loop() {
     
     case CALIBRATE: {
       calibrate();
+      currentState = SCALE_TEST;
       }
     
-  case SCALE_TEST:
+  case SCALE_TEST: 
 
   static unsigned long lastPrint = 0;
 
