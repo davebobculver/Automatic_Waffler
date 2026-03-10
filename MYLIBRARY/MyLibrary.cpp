@@ -2,52 +2,35 @@
 // functions declared in MyLibrary.h.
 
 #include "MyLibrary.h"
-
 #include <HX711_ADC.h>
 #include <EEPROM.h>
 #include <Stepper.h>
 
-// Extern declarations for globals defined in MasterCode_AutoWaffle
+//EXTERNS VARIABLES
 extern const int solenoidPin;
 extern Stepper myStepper;
 extern const int updownsteps;
-extern bool flag;
+extern bool waffleOpen;
 
+//Load Cell
 extern HX711_ADC LoadCell;
 extern const int calVal_eepromAdress;
 
-void openValve() {
-    digitalWrite(solenoidPin, HIGH);
-}
+//VALVE
+void openValve() {digitalWrite(solenoidPin, HIGH);}
+void closeValve() {digitalWrite(solenoidPin, LOW);}
 
-void closeValve() {
-    digitalWrite(solenoidPin, LOW);
-}
+//WAFFLE IRON
+void openWaffleIron() {myStepper.step(updownsteps); waffleOpen = true;}
+void closeWaffleIron() {myStepper.step(-updownsteps); waffleOpen = 0;}
+bool waffleIronisOpen() {return waffleOpen;}
 
-void openWaffleIron() {
-    myStepper.step(updownsteps);
-    delay(100);
-    flag = 1;
-}
-
-void closeWaffleIron() {
-    myStepper.step(-updownsteps);
-    flag = 0;
-}
-
+//ERROR
 void SystemShutdown() {
     closeValve();
     closeWaffleIron();
     Serial.println("System Shutting Down");
 }
-
-bool waffleIronisOpen() {
-    if (flag == 1) {
-        return true;
-    }
-    return false;
-}
-
 float readForce() {
     static float filteredForce = 0.0f;
     const float alpha = 0.15f; // smoothing factor
