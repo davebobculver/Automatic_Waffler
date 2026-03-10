@@ -1,44 +1,42 @@
-LIST OF Arduino Pins Used
 
-GND     (GLOBAL GROUND)
-+5V     (HX711)
-
-PIN 2,3   (Solenoid Relay OUT/IN)
-PIN 6,7   (HX711)
-PIN 8-11  (STEPPER + MOTORSHIELD)
+/**********************************/
+  GND     (GLOBAL GROUND)
+  +5V     (HX711)
+  
+  PIN 2,3   (Solenoid Relay OUT/IN)
+  PIN 6,7   (HX711)
+  PIN 8-11  (STEPPER + MOTORSHIELD)
+/**********************************/
 
 
 //SOLENOID powered via POWER RELAY
+  PIN2 --- VCC -->             |-------------| NO ---> (NOTHING)
+  Arduino GND --- GND -->      | POWER RELAY |COM  --- POWER SOURCE (~13V)
+  Arduino GND --- IN -->       |-------------| NC  --- PIN 3
 
-PIN2 --- VCC -->             |-------------| NO ---> (NOTHING)
-Arduino GND --- GND -->      | POWER RELAY |COM  --- POWER SOURCE (~13V)
-Arduino GND --- IN -->       |-------------| NC  --- PIN 3
-
-LOGIC:
-
-if(V_CC == HIGH) 
-  OUT = IN
-if (V_CC == LOW)
-  OUT = 0V
+  LOGIC:
+  
+  if(V_CC == HIGH) 
+    OUT = IN
+  if (V_CC == LOW)
+    OUT = 0V
 
 
 //MOTOR SHIELD (via Stepper.h):
-IN1 --> PIN8
-IN2 --> PIN9
-IN3 --> PIN10
-IN4 --> PIN11
+  IN1 --> PIN8
+  IN2 --> PIN9
+  IN3 --> PIN10
+  IN4 --> PIN11
  
-VCC <--- POWER SUPPLY (~17V , 0.7A)
-GND <--- Arduino GND
-+5V (from Arduino)
+  VCC <--- POWER SUPPLY (~17V , 0.7A)
+  GND <--- Arduino GND
+  +5V (from Arduino)
 
-M1: One Side of Stepper
+  M1: One Side of Stepper
+  M2: Other Side of Stepper
 
-M2: Other Side of Stepper
-
-//HX711:
-
-ARDUINO GND ---> GND
-HX711_dout ---> PIN 6
-HX711_sck --> PIN 7
-V_CC ---> ARDUINO +5V
+//HX711
+  ARDUINO GND ---> GND
+  HX711_dout ---> PIN 6
+  HX711_sck --> PIN 7
+  V_CC ---> ARDUINO +5V
