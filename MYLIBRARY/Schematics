@@ -10,7 +10,7 @@
 
 
 //SOLENOID powered via POWER RELAY
-  PIN2 --- VCC -->             |-------------| NO ---> (NOTHING)
+  PIN3 --- VCC -->             |-------------| NO ---> (NOTHING)
   Arduino GND --- GND -->      | POWER RELAY |COM  --- POWER SOURCE (~13V)
   Arduino GND --- IN -->       |-------------| NC  --- OUT
 
