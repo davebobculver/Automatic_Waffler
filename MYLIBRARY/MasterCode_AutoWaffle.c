@@ -188,7 +188,7 @@ void loop() {
       Serial.println("Idle: Waiting for Start");
 
       //Open Waffler if button 
-      if(digitalRead(startButtonPin) == LOW){
+      if(digitalRead(startButtonPin) == HIGH){
         Serial.println("Button pressed. Opening Waffler...");
         openWaffleIron();
         currentState = READY_FOR_BATTER;
