@@ -6,9 +6,8 @@
 
   //Libraries
   #include <math.h>
-  #include <Servo.h>          
   #include <Stepper.h>        
-  #include <LiquidCrystal.h> 
+  #include <LiquidCrystal.h> //FOR LCD
 
   #include "MyLibrary.h"
 
@@ -38,17 +37,16 @@
   const int stepsPerRevolution = 200; // Number of steps per revolution 
   Stepper myStepper(stepsPerRevolution, MOTORPIN1 , MOTORPIN2, MOTORPIN3, MOTORPIN4); // Pins connected to the motor
   const int numberofSteps = 1000;
-  bool waffleOpen = 0; 
 /*--------------------------------------------------------------------------*/
 //Layout/Controls + Setup
 
   //PINS
 
     //PUSHBUTTON:
-      const int startButton = 1;
+      const int startButton = 2;
     
     //SOLENOID
-     const int powerRelayV_CC = 3;
+     const int solenoidPin = 3;
 
     //HX711
      const int HX711_dout = 6; //mcu > HX711 dout pin
@@ -66,10 +64,8 @@
   float currentForce = 0; 
   float batterTargetWeight = 500;
   unsigned long cookStartTime;
-
-  const int calVal_eepromAdress = 0;
   bool waffleOpen = false;
-
+  unsigned long dispenseTime = 3000; //MUST BE CHANGED
   /*--------------------------------------------------------------------------*/
   // Hardware abstraction and calibration function implementations are now
   // located in MyLibrary.cpp with their declarations in MyLibrary.h.
@@ -91,7 +87,7 @@
   pinMode(startButtonPin, INPUT_PULLUP);
 
   // SOLENOID
-    pinMode(solenoidPin, INPUT_PULLUP);
+    pinMode(solenoidPin, OUTPUT);
     digitalWrite(solenoidPin, LOW);
     
   //HX711 + LoadCell Initiate
@@ -131,8 +127,6 @@
 //Main Loop
 void loop() {
 
-  //Update LoadCell then get the force and read it in to global currentForce
-  LoadCell.update(); 
   currentForce = readForce();
 
   switch (currentState) {
@@ -153,6 +147,7 @@ void loop() {
       calibrate();
       currentState = SCALE_TEST;
       }
+    break;
     
   case SCALE_TEST: 
 
@@ -205,7 +200,7 @@ void loop() {
     case READY_FOR_BATTER:
 
       //Check if the Waffler is open, then opens the valve for batter to dispense
-      if(waffleIronisOpen()){ //returns 0 if closed, 1 if waffleIronIsOpen()
+      if(waffleIronIsOpen()){ //returns 0 if closed, 1 if waffleIronIsOpen()
         Serial.println("Waffler Open. Dispensing Batter...");
         openValve(); //Dispense Batter
         currentState = DISPENSE; //Break with no delay to ensure smooth dispense
@@ -225,32 +220,9 @@ void loop() {
     // If batter has reached target weight
     if(force >= batterTargetWeight)
     {
-        Serial.println("Target weight reached! Opening solenoid...");
-        digitalWrite(solenoidPin, HIGH);  // Open valve
-        unsigned long dispenseStart = millis();
-
-        // Keep solenoid open for dispenseTime
-        while(millis() - dispenseStart < dispenseTime)
-        {
-            LoadCell.update();                  // continue updating load cell
-            currentForce = readForce();         // update global variable
-            Serial.print("Force during dispense: ");
-            Serial.println(currentForce);
-            delay(50);                          // small delay to avoid flooding serial
-        }
-
-        digitalWrite(solenoidPin, LOW);        // Close valve
-        Serial.println("Solenoid closed. Dispense complete.");
-
-        // Close waffler
-        closeWaffleIron();
-        currentState = READY_TO_COOK;
-    }
-    else
-    {
-        // Optional: keep showing force if below threshold
-        Serial.println("Waiting for batter...");
-        delay(200);
+      closeValve();
+      closeWaffleIron();
+      currentState = READY_TO_COOK;
     }
 
     break;
