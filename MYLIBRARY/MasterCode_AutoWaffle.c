@@ -26,7 +26,6 @@
       DISPENSE,         //Dispense Batter(after ready)
       READY_TO_COOK,    //Check if Ready to Cook
       COOKING,          //Start cooking (timer + temp + etc)
-      COOKED,           //Finish cook
       COMPLETE,         //Show Waffle is complete (if time allows try to LCD)
       ERROR             //Error should stop all processes immediately
     }
@@ -43,7 +42,7 @@
   //PINS
 
     //PUSHBUTTON:
-      const int startButton = 2;
+      const int startButtonPin = 2;
     
     //SOLENOID
      const int solenoidPin = 3;
@@ -127,6 +126,8 @@
 //Main Loop
 void loop() {
 
+  //Update LoadCell and begin reading Force
+  LoadCell.update();
   currentForce = readForce();
 
   switch (currentState) {
@@ -152,8 +153,6 @@ void loop() {
   case SCALE_TEST: 
 
   static unsigned long lastPrint = 0;
-
-  LoadCell.update();
 
   if(millis() - lastPrint > 500){
 
@@ -251,7 +250,7 @@ void loop() {
     //Check if Waffle is done cooking
     //CHECK THESE CONDITIONS manually???
     if(millis() - cookStartTime > 60000*4){
-      currentState = COOKED;
+      currentState = COMPLETE;
       break;
     }
 
@@ -263,12 +262,13 @@ void loop() {
 
       //Show completedness 
       //Maybe add LCD display showing waffle count, how heavy waffle was etc...
-      Serial.println("All Done");
+      openWaffleIron();
+      Serial.println("All Done!");
       break;
       return;
 
     case ERROR:
-      //SystemShutdown();
+      SystemShutdown();
       return;
   }
 }
