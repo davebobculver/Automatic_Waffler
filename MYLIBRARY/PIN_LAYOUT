@@ -1,0 +1,17 @@
+PIN LAYOUT: 
+
+  DIGITIAL PINS - 
+
+    //SOLENOID (SRD - 05VCD - SL - C)
+
+    PIN 2 --> VCC
+
+    //HX711
+    PIN 3 --> DT
+    PIN 4 --> SCK 
+
+    //MOTOR
+    PIN 8 --> IN1
+    PIN 9 --> IN2
+    PIN 10 --> IN3
+    PIN 11 --> IN4

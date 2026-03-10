@@ -1,0 +1,23 @@
+//This file is just to help keep track of waffle making parameters
+
+//STEPPER MOTOR (connected to L298N):
+stepsPerRevolution = 200
+Stepper myStepper(stepsPerRevolution, PIN1, PIN2, PIN3, PIN4)
+updownsteps = 60
+bool flag = 0;
+
+//HX711 Pins:
+const int HX711_dout = 4
+const int HX711_sck = 5
+
+//Timer for cooking
+long cookStartTime
+long 4minTimer = 60000*4
+const long MAXCOOKTIME = 60000*5
+
+//Controls 
+int WaffleCount = 0
+int desiredWaffles = 3
+
+batterTargetWeight = 
+
