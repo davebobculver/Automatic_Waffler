@@ -35,23 +35,24 @@
   currentState = INIT; //Start system 
 
   //Stepper
-  const int stepsPerRevolution = 200; // Number of steps per revolution (NEED TO CHECK)
-  Stepper myStepper(stepsPerRevolution, 10,11, 12, 13); // Pins connected to the motor
+  const int stepsPerRevolution = 200; // Number of steps per revolution 
+  Stepper myStepper(stepsPerRevolution, 8,9, 10, 11); // Pins connected to the motor
   const int updownsteps = 60;
   bool flag = 0;
 /*--------------------------------------------------------------------------*/
 //Layout/Controls + Setup
 
-  //PIN LAYOUT
-    //5 Digital Pins (TO BE CHANGED)
-     const int startButtonPin = 2;
-     const int HX711_dout = 4; //mcu > HX711 dout pin
-     const int HX711_sck = 5; //mcu > HX711 sck pin
-     const int solenoidPin = 6;       // Arduino pin controlling L298N for solenoid
-     const int solenoidPinPair = 7;   // Keep this LOW for one-way operation
+  //PINS
 
-    //1 Analog Pin(s) (TO BE CHANGED)
-     const int forceSensorPin = A3;
+    //SOLENOID
+     const int powerRelayV_CC = 3;
+
+    //MOTORSHIELD
+    //PINS 8-11 via myStepper
+
+    //HX711
+     const int HX711_dout = 6; //mcu > HX711 dout pin
+     const int HX711_sck = 7; //mcu > HX711 sck pin
      
   //Timers for cooking
     long cookStartTime = 0;
